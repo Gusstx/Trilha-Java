@@ -1,0 +1,4 @@
+public class ContaPoupanca extends Conta {
+    public ContaPoupanca(int numero, String titular, double saldoInicial) {
+        super(numero, titular, saldoInicial);
+    }

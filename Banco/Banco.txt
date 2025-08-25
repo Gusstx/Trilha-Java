@@ -1,0 +1,22 @@
+public class Banco {
+    public static void main(String[] args) {
+        Conta cc = new ContaCorrente(101, "João", 1000.0);
+        Conta cp = new ContaPoupanca(102, "Maria", 500.0);
+
+        cc.exibirSaldo();
+        cp.exibirSaldo();
+
+        System.out.println("\n>> João saca R$100");
+        cc.sacar(100);
+
+        System.out.println(">> Maria deposita R$200");
+        cp.depositar(200);
+
+        System.out.println(">> João transfere R$300 para Maria");
+        cc.transferir(300, cp);
+
+        System.out.println("\n-- Saldos Atualizados --");
+        cc.exibirSaldo();
+        cp.exibirSaldo();
+    }
+}
