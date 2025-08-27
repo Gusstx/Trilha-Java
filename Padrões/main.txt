@@ -1,0 +1,23 @@
+public class Main {
+    public static void main(String[] args) {
+        NotificationService notificationService = new NotificationService();
+        
+        User user1 = new User("Alice");
+        User user2 = new User("Bob");
+        
+        notificationService.addObserver(user1);
+        notificationService.addObserver(user2);
+        
+        Notification notification1 = NotificationFactory.createNotification("email", "alice@example.com");
+        Notification notification2 = NotificationFactory.createNotification("sms", "99999-1234");
+        
+        // Enviar e notificar
+        NotificationManager manager = NotificationManager.getInstance();
+        
+        manager.sendNotification(notification1);
+        notificationService.notifyObservers(notification1);
+        
+        manager.sendNotification(notification2);
+        notificationService.notifyObservers(notification2);
+    }
+}

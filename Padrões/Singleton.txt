@@ -1,0 +1,18 @@
+public class NotificationManager {
+    private static NotificationManager instance;
+    
+    private NotificationManager() {
+        // privado para impedir instanciação externa
+    }
+    
+    public static NotificationManager getInstance() {
+        if (instance == null) {
+            instance = new NotificationManager();
+        }
+        return instance;
+    }
+    
+    public void sendNotification(Notification notification) {
+        System.out.println("Enviando: " + notification.getMessage());
+    }
+}

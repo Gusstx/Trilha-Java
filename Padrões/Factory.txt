@@ -1,0 +1,42 @@
+abstract class Notification {
+    public abstract String getMessage();
+}
+
+class EmailNotification extends Notification {
+    private String email;
+    
+    public EmailNotification(String email) {
+        this.email = email;
+    }
+    
+    @Override
+    public String getMessage() {
+        return "Email enviado para " + email;
+    }
+}
+
+class SMSNotification extends Notification {
+    private String phone;
+    
+    public SMSNotification(String phone) {
+        this.phone = phone;
+    }
+    
+    @Override
+    public String getMessage() {
+        return "SMS enviado para " + phone;
+    }
+}
+
+class NotificationFactory {
+    public static Notification createNotification(String type, String target) {
+        switch(type.toLowerCase()) {
+            case "email":
+                return new EmailNotification(target);
+            case "sms":
+                return new SMSNotification(target);
+            default:
+                throw new IllegalArgumentException("Tipo de notificação desconhecido");
+        }
+    }
+}
