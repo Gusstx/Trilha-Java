@@ -1,0 +1,53 @@
+package com.exemplo.todoapi.controller;
+
+import com.exemplo.todoapi.model.Todo;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
+
+@RestController
+@RequestMapping("/api/todos")
+public class TodoController {
+
+    private List<Todo> todos = new ArrayList<>();
+    private AtomicLong counter = new AtomicLong();
+
+    @GetMapping
+    public List<Todo> listarTodos() {
+        return todos;
+    }
+
+    @PostMapping
+    public Todo criarTodo(@RequestBody Todo todo) {
+        todo.setId(counter.incrementAndGet());
+        todos.add(todo);
+        return todo;
+    }
+
+    @GetMapping("/{id}")
+    public Todo buscarPorId(@PathVariable Long id) {
+        return todos.stream()
+                .filter(t -> t.getId().equals(id))
+                .findFirst()
+                .orElse(null);
+    }
+
+    @PutMapping("/{id}")
+    public Todo atualizarTodo(@PathVariable Long id, @RequestBody Todo todoAtualizado) {
+        for (Todo todo : todos) {
+            if (todo.getId().equals(id)) {
+                todo.setDescricao(todoAtualizado.getDescricao());
+                todo.setConcluido(todoAtualizado.isConcluido());
+                return todo;
+            }
+        }
+        return null;
+    }
+
+    @DeleteMapping("/{id}")
+    public void deletarTodo(@PathVariable Long id) {
+        todos.removeIf(t -> t.getId().equals(id));
+    }
+}
