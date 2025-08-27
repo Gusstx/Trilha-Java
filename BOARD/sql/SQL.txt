@@ -1,0 +1,41 @@
+CREATE DATABASE IF NOT EXISTS taskboard;
+USE taskboard;
+
+-- Tabela dos boards
+CREATE TABLE boards (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL
+);
+
+-- Tabela das colunas (colunas pertencem a um board)
+CREATE TABLE columns (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    board_id INT NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    position INT NOT NULL,
+    type ENUM('INICIAL', 'PENDENTE', 'FINAL', 'CANCELAMENTO') NOT NULL,
+    FOREIGN KEY (board_id) REFERENCES boards(id) ON DELETE CASCADE
+);
+
+-- Tabela dos cards
+CREATE TABLE cards (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    column_id INT NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    created_at DATETIME NOT NULL,
+    is_blocked BOOLEAN NOT NULL DEFAULT FALSE,
+    entered_column_at DATETIME NOT NULL,
+    exited_column_at DATETIME,
+    FOREIGN KEY (column_id) REFERENCES columns(id) ON DELETE CASCADE
+);
+
+-- Tabela para registrar bloqueios e desbloqueios dos cards, com motivos e timestamps
+CREATE TABLE block_reasons (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    card_id INT NOT NULL,
+    reason TEXT NOT NULL,
+    action ENUM('BLOQUEIO', 'DESBLOQUEIO') NOT NULL,
+    timestamp DATETIME NOT NULL,
+    FOREIGN KEY (card_id) REFERENCES cards(id) ON DELETE CASCADE
+);

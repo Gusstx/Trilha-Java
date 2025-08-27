@@ -1,0 +1,41 @@
+import java.sql.Connection;
+import java.util.Scanner;
+
+public class BoardUI {
+
+    public static void handleBoard(Scanner scanner, Connection conn, int boardId) {
+        while (true) {
+            System.out.println("\n--- MENU DO BOARD ---");
+            System.out.println("1. Criar card");
+            System.out.println("2. Mover card para próxima coluna");
+            System.out.println("3. Cancelar card");
+            System.out.println("4. Bloquear card");
+            System.out.println("5. Desbloquear card");
+            System.out.println("6. Fechar board");
+            System.out.print("Escolha uma opção: ");
+            int opcao = Integer.parseInt(scanner.nextLine());
+
+            switch (opcao) {
+                case 1:
+                    CardManager.createCard(scanner, conn, boardId);
+                    break;
+                case 2:
+                    CardManager.moveCard(scanner, conn, boardId);
+                    break;
+                case 3:
+                    CardManager.cancelCard(scanner, conn, boardId);
+                    break;
+                case 4:
+                    CardManager.blockCard(scanner, conn, boardId);
+                    break;
+                case 5:
+                    CardManager.unblockCard(scanner, conn, boardId);
+                    break;
+                case 6:
+                    return;
+                default:
+                    System.out.println("Opção inválida.");
+            }
+        }
+    }
+}

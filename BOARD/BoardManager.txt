@@ -1,0 +1,123 @@
+import java.sql.*;
+import java.util.*;
+
+public class BoardManager {
+
+    public static void createBoard(Scanner scanner, Connection conn) {
+        try {
+            System.out.print("Nome do board: ");
+            String name = scanner.nextLine();
+
+            PreparedStatement stmt = conn.prepareStatement("INSERT INTO boards (name) VALUES (?)", Statement.RETURN_GENERATED_KEYS);
+            stmt.setString(1, name);
+            stmt.executeUpdate();
+
+            ResultSet rs = stmt.getGeneratedKeys();
+            rs.next();
+            int boardId = rs.getInt(1);
+
+            // Cria as colunas obrigatórias
+            createColumn(conn, boardId, "A Fazer", 1, "INICIAL");
+            createColumn(conn, boardId, "Em Progresso", 2, "PENDENTE");
+            createColumn(conn, boardId, "Concluído", 3, "FINAL");
+            createColumn(conn, boardId, "Cancelado", 4, "CANCELAMENTO");
+
+            System.out.println("Board criado com sucesso!");
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void createColumn(Connection conn, int boardId, String name, int position, String type) throws SQLException {
+        PreparedStatement stmt = conn.prepareStatement("INSERT INTO columns (board_id, name, position, type) VALUES (?, ?, ?, ?)");
+        stmt.setInt(1, boardId);
+        stmt.setString(2, name);
+        stmt.setInt(3, position);
+        stmt.setString(4, type);
+        stmt.executeUpdate();
+    }
+
+    public static void selectBoard(Scanner scanner, Connection conn) {
+        try {
+            Statement stmt = conn.createStatement();
+            ResultSet rs = stmt.executeQuery("SELECT * FROM boards");
+
+            List<Integer> ids = new ArrayList<>();
+            System.out.println("\n--- BOARDS DISPONÍVEIS ---");
+            int index = 1;
+            while (rs.next()) {
+                System.out.println(index + ". " + rs.getString("name"));
+                ids.add(rs.getInt("id"));
+                index++;
+            }
+
+            if (ids.isEmpty()) {
+                System.out.println("Nenhum board cadastrado.");
+                return;
+            }
+
+            System.out.print("Escolha um board: ");
+            int choice = Integer.parseInt(scanner.nextLine());
+            if (choice < 1 || choice > ids.size()) {
+                System.out.println("Opção inválida.");
+                return;
+            }
+
+            int boardId = ids.get(choice - 1);
+            BoardUI.handleBoard(scanner, conn, boardId);
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void deleteBoard(Scanner scanner, Connection conn) {
+        try {
+            Statement stmt = conn.createStatement();
+            ResultSet rs = stmt.executeQuery("SELECT * FROM boards");
+
+            List<Integer> ids = new ArrayList<>();
+            System.out.println("\n--- BOARDS DISPONÍVEIS ---");
+            int index = 1;
+            while (rs.next()) {
+                System.out.println(index + ". " + rs.getString("name"));
+                ids.add(rs.getInt("id"));
+                index++;
+            }
+
+            if (ids.isEmpty()) {
+                System.out.println("Nenhum board cadastrado.");
+                return;
+            }
+
+            System.out.print("Escolha o número do board para excluir: ");
+            int choice = Integer.parseInt(scanner.nextLine());
+
+            if (choice < 1 || choice > ids.size()) {
+                System.out.println("Opção inválida.");
+                return;
+            }
+
+            int boardId = ids.get(choice - 1);
+
+            // Apaga cards, colunas e board em cascata
+            PreparedStatement delCards = conn.prepareStatement("DELETE FROM cards WHERE column_id IN (SELECT id FROM columns WHERE board_id = ?)");
+            delCards.setInt(1, boardId);
+            delCards.executeUpdate();
+
+            PreparedStatement delColumns = conn.prepareStatement("DELETE FROM columns WHERE board_id = ?");
+            delColumns.setInt(1, boardId);
+            delColumns.executeUpdate();
+
+            PreparedStatement delBoard = conn.prepareStatement("DELETE FROM boards WHERE id = ?");
+            delBoard.setInt(1, boardId);
+            delBoard.executeUpdate();
+
+            System.out.println("Board excluído com sucesso!");
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+}

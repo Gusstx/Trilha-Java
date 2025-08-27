@@ -1,0 +1,131 @@
+import java.sql.*;
+import java.time.LocalDateTime;
+import java.util.*;
+
+public class CardManager {
+
+    public static void createCard(Scanner scanner, Connection conn, int boardId) {
+        try {
+            int initialColumnId = getColumnByType(conn, boardId, "INICIAL");
+
+            System.out.print("Título do card: ");
+            String title = scanner.nextLine();
+            System.out.print("Descrição do card: ");
+            String description = scanner.nextLine();
+
+            PreparedStatement stmt = conn.prepareStatement(
+                "INSERT INTO cards (column_id, title, description, created_at, is_blocked, entered_column_at) " +
+                "VALUES (?, ?, ?, ?, ?, ?)"
+            );
+            stmt.setInt(1, initialColumnId);
+            stmt.setString(2, title);
+            stmt.setString(3, description);
+            stmt.setTimestamp(4, Timestamp.valueOf(LocalDateTime.now()));
+            stmt.setBoolean(5, false);
+            stmt.setTimestamp(6, Timestamp.valueOf(LocalDateTime.now()));
+            stmt.executeUpdate();
+
+            System.out.println("Card criado com sucesso!");
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void moveCard(Scanner scanner, Connection conn, int boardId) {
+        try {
+            List<Card> cards = getMovableCards(conn, boardId);
+            if (cards.isEmpty()) {
+                System.out.println("Nenhum card disponível para mover.");
+                return;
+            }
+
+            showCards(cards);
+            System.out.print("Escolha um card: ");
+            int index = Integer.parseInt(scanner.nextLine()) - 1;
+
+            Card card = cards.get(index);
+
+            if (card.isBlocked) {
+                System.out.println("Este card está bloqueado e não pode ser movido.");
+                return;
+            }
+
+            int nextColumnId = getNextColumn(conn, boardId, card.columnId);
+            if (nextColumnId == -1) {
+                System.out.println("Este card já está na última coluna.");
+                return;
+            }
+
+            // Atualiza coluna do card
+            PreparedStatement stmt = conn.prepareStatement(
+                "UPDATE cards SET column_id = ?, exited_column_at = ?, entered_column_at = ? WHERE id = ?"
+            );
+            stmt.setInt(1, nextColumnId);
+            stmt.setTimestamp(2, Timestamp.valueOf(LocalDateTime.now()));
+            stmt.setTimestamp(3, Timestamp.valueOf(LocalDateTime.now()));
+            stmt.setInt(4, card.id);
+            stmt.executeUpdate();
+
+            System.out.println("Card movido com sucesso.");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void cancelCard(Scanner scanner, Connection conn, int boardId) {
+        try {
+            List<Card> cards = getActiveCards(conn, boardId);
+            if (cards.isEmpty()) {
+                System.out.println("Nenhum card disponível para cancelar.");
+                return;
+            }
+
+            showCards(cards);
+            System.out.print("Escolha um card para cancelar: ");
+            int index = Integer.parseInt(scanner.nextLine()) - 1;
+
+            Card card = cards.get(index);
+
+            if (card.isBlocked) {
+                System.out.println("Este card está bloqueado e não pode ser cancelado.");
+                return;
+            }
+
+            int cancelColumnId = getColumnByType(conn, boardId, "CANCELAMENTO");
+
+            PreparedStatement stmt = conn.prepareStatement(
+                "UPDATE cards SET column_id = ?, exited_column_at = ?, entered_column_at = ? WHERE id = ?"
+            );
+            stmt.setInt(1, cancelColumnId);
+            stmt.setTimestamp(2, Timestamp.valueOf(LocalDateTime.now()));
+            stmt.setTimestamp(3, Timestamp.valueOf(LocalDateTime.now()));
+            stmt.setInt(4, card.id);
+            stmt.executeUpdate();
+
+            System.out.println("Card cancelado com sucesso.");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void blockCard(Scanner scanner, Connection conn, int boardId) {
+        try {
+            List<Card> cards = getUnblockedCards(conn, boardId);
+            if (cards.isEmpty()) {
+                System.out.println("Nenhum card disponível para bloquear.");
+                return;
+            }
+
+            showCards(cards);
+            System.out.print("Escolha um card para bloquear: ");
+            int index = Integer.parseInt(scanner.nextLine()) - 1;
+            Card card = cards.get(index);
+
+            System.out.print("Informe o motivo do bloqueio: ");
+            String motivo = scanner.nextLine();
+
+            PreparedStatement stmt = conn.prepareStatement("UPDATE cards SET is_blocked = ? WHERE id = ?");
+            stmt.setBoolean(1, true);
